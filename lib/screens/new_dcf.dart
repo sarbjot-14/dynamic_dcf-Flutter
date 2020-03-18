@@ -167,7 +167,7 @@ class _NewDCFState extends State<NewDCF> {
       var year = i + 1;
       presentValueEarnings[i] = earnings[i] * (pow(1 + discountRate, -year));
     }
-    print(presentValueEarnings);
+    //print(presentValueEarnings);
     double sum = 0;
     presentValueEarnings.forEach((num e) {
       sum += e;

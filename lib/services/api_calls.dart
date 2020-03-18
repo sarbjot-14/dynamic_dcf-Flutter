@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:dynamic_dcf/model/stock.dart';
+import 'package:dynamic_dcf/models/stock.dart';
 import 'package:http/http.dart' as http;
 
 class Api_Calls {

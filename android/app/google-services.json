@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "1016415390138",
+    "firebase_url": "https://dynamic-dcf.firebaseio.com",
+    "project_id": "dynamic-dcf",
+    "storage_bucket": "dynamic-dcf.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1016415390138:android:8389fce82631c99df0b583",
+        "android_client_info": {
+          "package_name": "com.dynamicdcf.dynamic_dcf"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1016415390138-8cg4jib0tmasvjb457qpatm0qncd1609.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJ_DUIf7RGUKDQaffjBTXvUnpNQOhI7nM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1016415390138-8cg4jib0tmasvjb457qpatm0qncd1609.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
