@@ -1,18 +1,38 @@
 import 'dart:math';
 
+import 'package:dynamic_dcf/models/portfolio.dart';
 import 'package:dynamic_dcf/services/api_calls.dart';
+import 'package:dynamic_dcf/services/database_service.dart';
 import 'package:flutter/material.dart';
+
+//{
+//DatabaseService()
+//    .updateData(port, port.documentId)
+//.then((message) {
+//
+//});
+//}
 
 class NewDCF extends StatefulWidget {
   String passedSymbol;
-
-  NewDCF({Key key, @required this.passedSymbol}) : super(key: key);
+  String userId;
+  Portfolio portfolio;
+  String documentId;
+  //Function getPortfolio;
+  NewDCF(
+      {Key key,
+      @required this.passedSymbol,
+      this.userId,
+      this.portfolio,
+      this.documentId})
+      : super(key: key);
   @override
   _NewDCFState createState() => _NewDCFState(passedSymbol: passedSymbol);
 }
 
 class _NewDCFState extends State<NewDCF> {
   double earningsLastYear = 0;
+  String name;
   List<double> earnings = List<double>(11);
   List<double> presentValueEarnings = List<double>(11);
   double presentValue = 0;
@@ -40,10 +60,65 @@ class _NewDCFState extends State<NewDCF> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    //widget.getPortfolio();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(passedSymbol),
+        actions: <Widget>[
+          widget.portfolio != null
+              ? new FlatButton(
+                  child: new Text('Delete',
+                      style:
+                          new TextStyle(fontSize: 17.0, color: Colors.white)),
+                  onPressed: () {
+                    DatabaseService().deletePortfolio(widget.documentId);
+                    Navigator.of(context).pop();
+                  })
+              : null,
+          widget.portfolio != null
+              ? new FlatButton(
+                  child: new Text('Update',
+                      style:
+                          new TextStyle(fontSize: 17.0, color: Colors.white)),
+                  onPressed: () {
+                    Portfolio portfolio = Portfolio(
+                      userId: widget.userId,
+                      symbol: passedSymbol,
+                      discountRate: discountRate,
+                      terminalMultiple: terminalMultiple,
+                      growthRateP1: growthRateP1,
+                      growthRateP2: growthRateP2,
+                      safetyMargin: safetyMargin,
+                      presentValue: presentValue,
+                    );
+                    DatabaseService().updateData(portfolio, widget.documentId);
+                    Navigator.of(context).pop();
+                  })
+              : IconButton(
+                  icon: const Icon(Icons.save),
+                  tooltip: 'Show Snackbar',
+                  onPressed: () {
+                    Portfolio portfolio = Portfolio(
+                      userId: widget.userId,
+                      symbol: passedSymbol,
+                      discountRate: discountRate,
+                      terminalMultiple: terminalMultiple,
+                      growthRateP1: growthRateP1,
+                      growthRateP2: growthRateP2,
+                      safetyMargin: safetyMargin,
+                      presentValue: presentValue,
+                    );
+                    DatabaseService().addPortfolio(portfolio);
+                    Navigator.of(context).pop();
+                  },
+                ),
+        ],
       ),
       body: Column(
         children: <Widget>[

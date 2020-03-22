@@ -1,7 +1,9 @@
+import 'package:dynamic_dcf/models/portfolio.dart';
 import 'package:dynamic_dcf/models/stock.dart';
 import 'package:dynamic_dcf/screens/new_dcf.dart';
 import 'package:dynamic_dcf/services/api_calls.dart';
 import 'package:dynamic_dcf/services/authentication.dart';
+import 'package:dynamic_dcf/services/database_service.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -20,7 +22,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-
+    updatePortfolio();
     //_checkEmailVerification();
   }
 
@@ -36,6 +38,27 @@ class _HomePageState extends State<HomePage> {
   int _counter = 0;
   Api_Calls ApiCalls = Api_Calls();
   var searchedTickers = List<Stock>();
+  List<Portfolio> portfolios = null;
+
+  void updatePortfolio() {
+    //print("did it work? ${DatabaseService().getPortfolio()}");
+
+    DatabaseService().getPortfolio().then((snapshot) {
+      portfolios = null;
+      List<Portfolio> tempPortfolios = List<Portfolio>();
+      snapshot.documents.forEach((f) {
+        //print(f.documentID);
+        Portfolio tempPort =
+            Portfolio.fromJson(f.data, f.documentID); //Portfolio(userId:
+
+        tempPortfolios.add(tempPort);
+        //print("finally ${portfolios[0].userId}");
+      });
+      setState(() {
+        portfolios = tempPortfolios;
+      });
+    });
+  }
 
   void _incrementCounter() {
     showModalBottomSheet(
@@ -72,6 +95,8 @@ class _HomePageState extends State<HomePage> {
                                       builder: (context) => NewDCF(
                                             passedSymbol:
                                                 searchedTickers[index].symbol,
+                                            userId: widget.userId,
+                                            portfolio: null,
                                           )),
                                 );
                               },
@@ -86,31 +111,60 @@ class _HomePageState extends State<HomePage> {
         });
   }
 
+  Widget bodyData() {
+    return DataTable(
+      columns: <DataColumn>[
+        DataColumn(label: Text('Symbol'), numeric: false),
+        DataColumn(
+            label: Text('Fair Value '),
+            numeric: true,
+            tooltip: 'Fair value you estimated using DCF')
+      ],
+      rows: portfolios == null
+          ? List<DataRow>()
+          : portfolios.map((port) {
+              return DataRow(cells: [
+                DataCell(Text(port.symbol)),
+                DataCell(Text(port.presentValue.toString()), showEditIcon: true,
+                    onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => NewDCF(
+                              passedSymbol: port.symbol,
+                              userId: widget.userId,
+                              portfolio: port,
+                              documentId: port.documentId,
+                            )),
+                  ).then((value) {
+                    updatePortfolio();
+                  });
+                })
+              ]);
+            }).toList(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Dynamic DCF Calculator"),
         actions: <Widget>[
+          IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Show Snackbar',
+              onPressed: () {
+                updatePortfolio();
+              }),
           new FlatButton(
               child: new Text('Logout',
                   style: new TextStyle(fontSize: 17.0, color: Colors.white)),
-              onPressed: signOut)
+              onPressed: signOut),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
-            ),
-          ],
-        ),
+      body: Container(
+        child: bodyData(),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
