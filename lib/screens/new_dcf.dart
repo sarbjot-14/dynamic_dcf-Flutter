@@ -5,14 +5,6 @@ import 'package:dynamic_dcf/services/api_calls.dart';
 import 'package:dynamic_dcf/services/database_service.dart';
 import 'package:flutter/material.dart';
 
-//{
-//DatabaseService()
-//    .updateData(port, port.documentId)
-//.then((message) {
-//
-//});
-//}
-
 class NewDCF extends StatefulWidget {
   String passedSymbol;
   String userId;
@@ -38,16 +30,26 @@ class _NewDCFState extends State<NewDCF> {
   double presentValue = 0;
   int firstPeriod = 5;
   int secondPeriod = 5;
-  double discountRate = 0.8;
+  double discountRate = 0.2;
   double terminalMultiple = 18;
   double growthRateP1 = 0.15;
   double growthRateP2 = 0.10;
   double safetyMargin = 0.10;
   Api_Calls ApiCalls = Api_Calls();
   String passedSymbol;
+  String currentPrice = '-';
   _NewDCFState({this.passedSymbol});
   void initState() {
     super.initState();
+
+    if (widget.portfolio != null) {
+      discountRate = widget.portfolio.discountRate;
+      growthRateP1 = widget.portfolio.growthRateP1;
+      growthRateP2 = widget.portfolio.growthRateP2;
+      safetyMargin = widget.portfolio.safetyMargin;
+      presentValue = widget.portfolio.presentValue;
+      terminalMultiple = widget.portfolio.terminalMultiple;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) => {
           ApiCalls.getEPS(passedSymbol).then((eps) {
             print("eps is $eps");
@@ -57,6 +59,7 @@ class _NewDCFState extends State<NewDCF> {
             });
           })
         });
+    getPrice(passedSymbol);
   }
 
   @override
@@ -80,7 +83,7 @@ class _NewDCFState extends State<NewDCF> {
                     DatabaseService().deletePortfolio(widget.documentId);
                     Navigator.of(context).pop();
                   })
-              : null,
+              : Text(''),
           widget.portfolio != null
               ? new FlatButton(
                   child: new Text('Update',
@@ -128,7 +131,12 @@ class _NewDCFState extends State<NewDCF> {
                 Text('fair value'),
                 Text(
                   presentValue.toString(),
-                  style: TextStyle(fontSize: 50),
+                  style: TextStyle(fontSize: 40),
+                ),
+                Text('Current Price'),
+                Text(
+                  currentPrice,
+                  style: TextStyle(fontSize: 40),
                 )
               ],
             ),
@@ -234,8 +242,7 @@ class _NewDCFState extends State<NewDCF> {
       }
     }
     earnings[10] = earnings[9] * terminalMultiple;
-    //print(earnings);
-    /////
+
     presentValueEarnings[0] = earnings[0] * (pow(1 + discountRate, -1));
 
     for (int i = 1; i < 11; i++) {
@@ -250,6 +257,17 @@ class _NewDCFState extends State<NewDCF> {
     sum = sum - (sum * safetyMargin);
     setState(() {
       presentValue = double.parse((sum).toStringAsFixed(2));
+    });
+  }
+
+  void getPrice(String passedSymbol) {
+    Api_Calls().getPrice(',' + passedSymbol).then((s) {
+      //print("getting price in dcf $s");
+      setState(() {
+        currentPrice = s['price'].toStringAsFixed(2);
+      });
+
+      //eturn 'what';
     });
   }
 }
