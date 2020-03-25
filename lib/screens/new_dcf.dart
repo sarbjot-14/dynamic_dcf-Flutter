@@ -99,6 +99,7 @@ class _NewDCFState extends State<NewDCF> {
                       growthRateP2: growthRateP2,
                       safetyMargin: safetyMargin,
                       presentValue: presentValue,
+                      earningsLastYear: earningsLastYear,
                     );
                     DatabaseService().updateData(portfolio, widget.documentId);
                     Navigator.of(context).pop();
@@ -116,6 +117,7 @@ class _NewDCFState extends State<NewDCF> {
                       growthRateP2: growthRateP2,
                       safetyMargin: safetyMargin,
                       presentValue: presentValue,
+                      earningsLastYear: earningsLastYear,
                     );
                     DatabaseService().addPortfolio(portfolio);
                     Navigator.of(context).pop();

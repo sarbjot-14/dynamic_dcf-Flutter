@@ -9,6 +9,7 @@ class Portfolio {
   double growthRateP2;
   double safetyMargin;
   String documentId;
+  double earningsLastYear;
 
   Portfolio(
       {this.userId,
@@ -19,7 +20,8 @@ class Portfolio {
       this.terminalMultiple,
       this.growthRateP1,
       this.growthRateP2,
-      this.safetyMargin});
+      this.safetyMargin,
+      this.earningsLastYear});
 
   Portfolio.fromJson(Map<String, dynamic> json, String docId) {
     symbol = json['symbol'];
@@ -32,6 +34,7 @@ class Portfolio {
     growthRateP2 = json['growthRateP2'];
     safetyMargin = json['safetyMargin'];
     documentId = docId;
+    earningsLastYear = json['earningsLastYear'];
   }
 
   toJson() {
@@ -43,7 +46,8 @@ class Portfolio {
       'terminalMultiple': terminalMultiple,
       'growthRateP1': growthRateP1,
       'growthRateP2': growthRateP2,
-      'safetyMargin': safetyMargin
+      'safetyMargin': safetyMargin,
+      'earningsLastYear': earningsLastYear
     };
   }
 }

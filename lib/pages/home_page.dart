@@ -6,6 +6,7 @@ import 'package:dynamic_dcf/services/authentication.dart';
 import 'package:dynamic_dcf/services/database_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key key, this.auth, this.userId, this.logoutCallback})
@@ -20,6 +21,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final RefreshController _refreshController = RefreshController();
   @override
   void initState() {
     super.initState();
@@ -42,7 +44,9 @@ class _HomePageState extends State<HomePage> {
   List<Portfolio> portfolios = null;
   List<dynamic> allRatios = List<dynamic>();
   dynamic priceList = null;
-  void updatePortfolio() {
+
+  Future<void> updatePortfolio() {
+    //print("sick");
     String tickerList = '';
     DatabaseService().getPortfolio().then((snapshot) {
       portfolios = null;
@@ -71,6 +75,7 @@ class _HomePageState extends State<HomePage> {
         //print("prices $prices");
       });
     });
+    return null;
   }
 
   String getMetric(String ticker, String type, String metric) {
@@ -149,25 +154,31 @@ class _HomePageState extends State<HomePage> {
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: DataTable(
-                columns: <DataColumn>[
-                  DataColumn(label: Text('Symbol'), numeric: false),
-                  DataColumn(label: Text('Price'), numeric: true),
-                  DataColumn(
-                      label: Text('Fair Value '),
-                      numeric: true,
-                      tooltip: 'Fair value you estimated using DCF'),
-                  DataColumn(label: Text('P/E'), numeric: true),
-                  DataColumn(
-                    label: Text('P/S'),
-                    numeric: true,
-                  ),
-                  DataColumn(label: Text('P/B'), numeric: true),
-                  DataColumn(
-                    label: Text('PES'),
-                    numeric: true,
-                  ),
-                  DataColumn(label: Text('Dividend Yield'), numeric: true),
-                ],
+                columns: portfolios == null
+                    ? <DataColumn>[
+                        DataColumn(label: Text('Symbol'), numeric: false),
+                        DataColumn(label: Text('Price'), numeric: true),
+                      ]
+                    : <DataColumn>[
+                        DataColumn(label: Text('Symbol'), numeric: false),
+                        DataColumn(label: Text('Price'), numeric: true),
+                        DataColumn(
+                            label: Text('Fair Value '),
+                            numeric: true,
+                            tooltip: 'Fair value you estimated using DCF'),
+                        DataColumn(label: Text('P/E'), numeric: true),
+                        DataColumn(
+                          label: Text('P/S'),
+                          numeric: true,
+                        ),
+                        DataColumn(label: Text('P/B'), numeric: true),
+                        DataColumn(
+                          label: Text('PES'),
+                          numeric: true,
+                        ),
+                        DataColumn(
+                            label: Text('Dividend Yield'), numeric: true),
+                      ],
                 rows: portfolios == null
                     ? [
                         DataRow(selected: false, cells: [
@@ -178,7 +189,7 @@ class _HomePageState extends State<HomePage> {
                     : portfolios.map((port) {
                         return DataRow(cells: [
                           DataCell(Text(port.symbol)),
-                          DataCell(getPrice(port.symbol)),
+                          DataCell(Text(getPrice(port.symbol))),
                           DataCell(Text(port.presentValue.toString()),
                               showEditIcon: true, onTap: () {
                             Navigator.push(
@@ -194,10 +205,9 @@ class _HomePageState extends State<HomePage> {
                               updatePortfolio();
                             });
                           }),
-                          DataCell(Text(getMetric(
-                              port.symbol,
-                              "investmentValuationRatios",
-                              "priceEarningsRatio"))),
+                          DataCell(Text((double.parse(getPrice(port.symbol)) /
+                                  port.earningsLastYear)
+                              .toStringAsFixed(1))),
                           DataCell(Text(getMetric(
                               port.symbol,
                               "investmentValuationRatios",
@@ -230,19 +240,19 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: Text("Dynamic DCF Calculator"),
         actions: <Widget>[
-          IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: 'Show Snackbar',
-              onPressed: () {
-                updatePortfolio();
-              }),
           new FlatButton(
               child: new Text('Logout',
                   style: new TextStyle(fontSize: 17.0, color: Colors.white)),
               onPressed: signOut),
         ],
       ),
-      body: Container(
+      body: SmartRefresher(
+        controller: _refreshController,
+        enablePullDown: true,
+        onRefresh: () async {
+          await updatePortfolio();
+          _refreshController.refreshCompleted();
+        },
         child: bodyData(),
       ),
       floatingActionButton: FloatingActionButton(
@@ -253,7 +263,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget getPrice(String symbol) {
+  String getPrice(String symbol) {
+    if (priceList['companiesPriceList'] == null) {
+      return '--';
+    }
     if (priceList['companiesPriceList']
             .where((s) {
               return s['symbol'] == symbol;
@@ -261,14 +274,14 @@ class _HomePageState extends State<HomePage> {
             .toList()
             .length ==
         0) {
-      return Text('--');
+      return '--';
     } else {
-      return Text(priceList['companiesPriceList']
+      return priceList['companiesPriceList']
           .where((s) {
             return s['symbol'] == symbol;
           })
           .toList()[0]['price']
-          .toString());
+          .toString();
     }
   }
 }
