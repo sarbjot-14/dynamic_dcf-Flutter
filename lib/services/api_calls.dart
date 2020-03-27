@@ -11,7 +11,7 @@ class Api_Calls {
   Future<List<Stock>> searchTicker(String ticker) async {
     var stockList = List<Stock>();
     var response = await http.get(
-        'https://financialmodelingprep.com/api/v3/search?query=${ticker.toUpperCase()}&limit=80');
+        'https://financialmodelingprep.com/api/v3/search?query=${ticker.toUpperCase()}&limit=150');
     if (response.statusCode == 200) {
       var stocks = json.decode(response.body);
       for (var stock in stocks) {

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:dynamic_dcf/models/portfolio.dart';
 import 'package:dynamic_dcf/services/api_calls.dart';
 import 'package:dynamic_dcf/services/database_service.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class NewDCF extends StatefulWidget {
@@ -38,6 +39,36 @@ class _NewDCFState extends State<NewDCF> {
   Api_Calls ApiCalls = Api_Calls();
   String passedSymbol;
   String currentPrice = '-';
+
+  Future<void> _neverSatisfied() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Sorry'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(
+                    'Currenty this model only works for stocks with positive earnings'),
+                Text('Try again with another stock!'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Return'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   _NewDCFState({this.passedSymbol});
   void initState() {
     super.initState();
@@ -53,10 +84,17 @@ class _NewDCFState extends State<NewDCF> {
     WidgetsBinding.instance.addPostFrameCallback((_) => {
           ApiCalls.getEPS(passedSymbol).then((eps) {
             print("eps is $eps");
-            setState(() {
-              earningsLastYear = 6.67;
-              updatePresentValue();
-            });
+            if (eps < 0) {
+              print("sorry no negative eps");
+              _neverSatisfied().then((nullValue) {
+                Navigator.of(context).pop();
+              });
+            } else {
+              setState(() {
+                earningsLastYear = eps;
+                updatePresentValue();
+              });
+            }
           })
         });
     getPrice(passedSymbol);
@@ -138,18 +176,31 @@ class _NewDCFState extends State<NewDCF> {
                 Text('Current Price'),
                 Text(
                   currentPrice,
-                  style: TextStyle(fontSize: 40),
+                  style: TextStyle(fontSize: 30),
                 )
               ],
             ),
           ),
-          Center(
-            child: Card(
-              child: Container(
-                child: Column(
-                  children: <Widget>[
-                    Text('Growth for years 1-5'),
-                    Slider(
+          Expanded(
+            child: Container(
+              //width: MediaQuery.of(context).size.width * 0.95,
+              //height: MediaQuery.of(context).size.height * 0.5,
+              //color: Colors.grey,
+              padding: EdgeInsets.fromLTRB(0, 80, 2, 0),
+              decoration: BoxDecoration(
+                  color: Colors.grey,
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(60.0),
+                      topRight: Radius.circular(60.0))),
+              child: Column(
+                children: <Widget>[
+                  Text('Growth for years 1-5'),
+                  SliderTheme(
+                    data: SliderThemeData(
+                        trackHeight: 5,
+                        thumbShape:
+                            RoundSliderThumbShape(enabledThumbRadius: 12.0)),
+                    child: Slider(
                       value: growthRateP1 * 100,
                       min: 1.0,
                       max: 100.0,
@@ -163,68 +214,68 @@ class _NewDCFState extends State<NewDCF> {
                         updatePresentValue();
                       },
                     ),
-                    Text('Growth for years 5-10'),
-                    Slider(
-                      value: growthRateP2 * 100,
-                      min: 1.0,
-                      max: 100.0,
-                      divisions: 100,
-                      label:
-                          '${double.parse((growthRateP2 * 100).toStringAsFixed(2))}%',
-                      onChanged: (double growthTwo) {
-                        setState(() {
-                          growthRateP2 = growthTwo.round().toDouble() / 100;
-                        });
-                        updatePresentValue();
-                      },
-                    ),
-                    Text('Discount Rate'),
-                    Slider(
-                      value: discountRate * 100,
-                      min: 1.0,
-                      max: 100.0,
-                      divisions: 100,
-                      label:
-                          '${double.parse((discountRate * 100).toStringAsFixed(2))}%',
-                      onChanged: (double discount) {
-                        setState(() {
-                          discountRate = discount.round().toDouble() / 100;
-                        });
-                        updatePresentValue();
-                      },
-                    ),
-                    Text('Terminal Multiple'),
-                    Slider(
-                      value: terminalMultiple,
-                      min: 1.0,
-                      max: 300.0,
-                      divisions: 150,
-                      label:
-                          '${double.parse((terminalMultiple).toStringAsFixed(2))}',
-                      onChanged: (double terminal) {
-                        setState(() {
-                          terminalMultiple = terminal;
-                        });
-                        updatePresentValue();
-                      },
-                    ),
-                    Text('Margin of Safety'),
-                    Slider(
-                      value: safetyMargin * 100,
-                      min: 1.0,
-                      max: 50.0,
-                      divisions: 50,
-                      label:
-                          '${double.parse((safetyMargin * 100).toStringAsFixed(2))}%',
-                      onChanged: (double margin) {
-                        setState(() {
-                          safetyMargin = margin / 100;
-                        });
-                        updatePresentValue();
-                      },
-                    ),
-                  ],
-                ),
+                  ),
+                  Text('Growth for years 5-10'),
+                  Slider(
+                    value: growthRateP2 * 100,
+                    min: 1.0,
+                    max: 100.0,
+                    divisions: 100,
+                    label:
+                        '${double.parse((growthRateP2 * 100).toStringAsFixed(2))}%',
+                    onChanged: (double growthTwo) {
+                      setState(() {
+                        growthRateP2 = growthTwo.round().toDouble() / 100;
+                      });
+                      updatePresentValue();
+                    },
+                  ),
+                  Text('Discount Rate'),
+                  Slider(
+                    value: discountRate * 100,
+                    min: 1.0,
+                    max: 100.0,
+                    divisions: 100,
+                    label:
+                        '${double.parse((discountRate * 100).toStringAsFixed(2))}%',
+                    onChanged: (double discount) {
+                      setState(() {
+                        discountRate = discount.round().toDouble() / 100;
+                      });
+                      updatePresentValue();
+                    },
+                  ),
+                  Text('Terminal Multiple'),
+                  Slider(
+                    value: terminalMultiple,
+                    min: 1.0,
+                    max: 300.0,
+                    divisions: 150,
+                    label:
+                        '${double.parse((terminalMultiple).toStringAsFixed(2))}',
+                    onChanged: (double terminal) {
+                      setState(() {
+                        terminalMultiple = terminal;
+                      });
+                      updatePresentValue();
+                    },
+                  ),
+                  Text('Margin of Safety'),
+                  Slider(
+                    value: safetyMargin * 100,
+                    min: 1.0,
+                    max: 50.0,
+                    divisions: 50,
+                    label:
+                        '${double.parse((safetyMargin * 100).toStringAsFixed(2))}%',
+                    onChanged: (double margin) {
+                      setState(() {
+                        safetyMargin = margin / 100;
+                      });
+                      updatePresentValue();
+                    },
+                  ),
+                ],
               ),
             ),
           )

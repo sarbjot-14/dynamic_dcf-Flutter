@@ -6,6 +6,7 @@ import 'package:dynamic_dcf/services/authentication.dart';
 import 'package:dynamic_dcf/services/database_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 class HomePage extends StatefulWidget {
@@ -46,11 +47,12 @@ class _HomePageState extends State<HomePage> {
   dynamic priceList = null;
 
   Future<void> updatePortfolio() {
-    //print("sick");
+    print("sick");
     String tickerList = '';
     DatabaseService().getPortfolio().then((snapshot) {
       portfolios = null;
       List<Portfolio> tempPortfolios = List<Portfolio>();
+
       snapshot.documents.forEach((f) {
         Portfolio tempPort =
             Portfolio.fromJson(f.data, f.documentID); //Portfolio(userId:
@@ -60,7 +62,13 @@ class _HomePageState extends State<HomePage> {
       });
       tempPortfolios =
           tempPortfolios.where((port) => port.userId == widget.userId).toList();
-
+      if (tempPortfolios.length == 0) {
+        setState(() {
+          portfolios = null;
+          allRatios = List<dynamic>();
+        });
+        return null;
+      }
       tempPortfolios.forEach((port) {
         Api_Calls().getRatios(port.symbol).then((ratio) {
           allRatios.add(ratio);
@@ -79,14 +87,33 @@ class _HomePageState extends State<HomePage> {
   }
 
   String getMetric(String ticker, String type, String metric) {
-    //print("getting");
+    //print("getting metric $ticker $type $metric");
+
     if (allRatios.where((r) => r['symbol'] == ticker).toList().isEmpty) {
       return '-';
+    } else if (type == "date") {
+      return allRatios.where((r) => r['symbol'] == ticker).toList()[0]['ratios']
+          [0]['date'];
     } else {
-      return double.parse(allRatios
-              .where((r) => r['symbol'] == ticker)
-              .toList()[0]['ratios'][0][type][metric])
-          .toStringAsFixed(2);
+      if (allRatios.where((r) => r['symbol'] == ticker).toList()[0]['ratios'][0]
+              [type][metric] ==
+          '') {
+        return '-';
+      } else if (metric == "dividendYield") {
+        return (double.parse(allRatios
+                        .where((r) => r['symbol'] == ticker)
+                        .toList()[0]['ratios'][0][type][metric]) *
+                    100)
+                .toStringAsFixed(2) +
+            '%';
+      } else {
+//        print(allRatios.where((r) => r['symbol'] == ticker).toList()[0]
+//            ['ratios'][0][type][metric]);
+        return double.parse(allRatios
+                .where((r) => r['symbol'] == ticker)
+                .toList()[0]['ratios'][0][type][metric])
+            .toStringAsFixed(2);
+      }
     }
 //    print(allRatios.where((r) => r['symbol'] == ticker).toList()[0]['ratios'][0]
 //        [type][metric]);
@@ -99,22 +126,33 @@ class _HomePageState extends State<HomePage> {
           return StatefulBuilder(builder: (BuildContext context,
               StateSetter setStateModal /*You can rename this!*/) {
             return Column(
+//              mainAxisAlignment: MainAxisAlignment.start,
+//              crossAxisAlignment: CrossAxisAlignment.end,
               children: <Widget>[
-                TextField(
-                  onSubmitted: (String ticker) {
-                    ApiCalls.searchTicker(ticker).then((values) {
-                      searchedTickers.addAll(values);
-                      setStateModal(() {
-                        List<Stock> tempList = List<Stock>();
-                        tempList.addAll(values);
-                        searchedTickers = tempList;
+                Padding(
+                  padding: EdgeInsets.all(10),
+                  child: TextField(
+                    decoration: InputDecoration(
+                        hintText: "Search",
+                        icon: Icon(Icons.search),
+                        contentPadding: EdgeInsets.all(5.0)),
+                    onSubmitted: (String ticker) {
+                      ApiCalls.searchTicker(ticker).then((values) {
+                        searchedTickers.addAll(values);
+                        setStateModal(() {
+                          List<Stock> tempList = List<Stock>();
+                          tempList.addAll(values);
+                          searchedTickers = tempList;
+                        });
                       });
-                    });
-                  },
+                    },
+                  ),
                 ),
                 Expanded(
                   child: searchedTickers.length == 0
-                      ? Text('Search Tickers')
+                      ? Text(
+                          "",
+                        )
                       : ListView.builder(
                           itemBuilder: (context, index) {
                             return ListTile(
@@ -173,11 +211,18 @@ class _HomePageState extends State<HomePage> {
                         ),
                         DataColumn(label: Text('P/B'), numeric: true),
                         DataColumn(
-                          label: Text('PES'),
+                          label: Text('PEG'),
                           numeric: true,
                         ),
                         DataColumn(
                             label: Text('Dividend Yield'), numeric: true),
+                        DataColumn(
+                            label: Text(
+                              'Ratios\n Updated',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 10),
+                            ),
+                            numeric: false),
                       ],
                 rows: portfolios == null
                     ? [
@@ -188,8 +233,16 @@ class _HomePageState extends State<HomePage> {
                       ]
                     : portfolios.map((port) {
                         return DataRow(cells: [
-                          DataCell(Text(port.symbol)),
-                          DataCell(Text(getPrice(port.symbol))),
+                          DataCell(Text(
+                            port.symbol,
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700, fontSize: 18),
+                          )),
+                          DataCell(Text(
+                            getPrice(port.symbol),
+                            style: TextStyle(
+                                fontWeight: FontWeight.w500, fontSize: 18),
+                          )),
                           DataCell(Text(port.presentValue.toString()),
                               showEditIcon: true, onTap: () {
                             Navigator.push(
@@ -220,10 +273,10 @@ class _HomePageState extends State<HomePage> {
                               port.symbol,
                               "investmentValuationRatios",
                               "priceEarningsToGrowthRatio"))),
-                          DataCell(Text(getMetric(
-                              port.symbol,
-                              "cashFlowIndicatorRatios",
-                              "dividendPayoutRatio"))),
+                          DataCell(Text(getMetric(port.symbol,
+                              "investmentValuationRatios", "dividendYield"))),
+                          DataCell(Text(
+                              getMetric(port.symbol, "date", "dividendYield"))),
                         ]);
                       }).toList(),
               ),
@@ -265,7 +318,7 @@ class _HomePageState extends State<HomePage> {
 
   String getPrice(String symbol) {
     if (priceList['companiesPriceList'] == null) {
-      return '--';
+      return '0';
     }
     if (priceList['companiesPriceList']
             .where((s) {
@@ -274,7 +327,7 @@ class _HomePageState extends State<HomePage> {
             .toList()
             .length ==
         0) {
-      return '--';
+      return '0';
     } else {
       return priceList['companiesPriceList']
           .where((s) {
