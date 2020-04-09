@@ -33,7 +33,9 @@ class Api_Calls {
         'https://financialmodelingprep.com/api/v3/financials/income-statement/$ticker');
     if (response.statusCode == 200) {
       var stocks = json.decode(response.body);
-
+      if (stocks['financials'] == null) {
+        return null;
+      }
       var lastYear = stocks['financials'][0];
 
       var eps = lastYear['EPS Diluted'];

@@ -22,6 +22,11 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  static const List<String> _choices = <String>[
+    'About',
+    'Disclaimer',
+    'Logout'
+  ];
   final RefreshController _refreshController = RefreshController();
   @override
   void initState() {
@@ -45,6 +50,33 @@ class _HomePageState extends State<HomePage> {
   List<Portfolio> portfolios = null;
   List<dynamic> allRatios = List<dynamic>();
   dynamic priceList = null;
+
+  Future<void> _showInfo(String title, String body) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(body),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Return'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Future<void> updatePortfolio() {
     print("sick");
@@ -77,7 +109,7 @@ class _HomePageState extends State<HomePage> {
           });
         });
       });
-
+      priceList == null;
       Api_Calls().getPrice(tickerList).then((prices) {
         priceList = prices;
         //print("prices $prices");
@@ -233,10 +265,26 @@ class _HomePageState extends State<HomePage> {
                       ]
                     : portfolios.map((port) {
                         return DataRow(cells: [
-                          DataCell(Text(
-                            port.symbol,
-                            style: TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 18),
+                          DataCell(InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => NewDCF(
+                                          passedSymbol: port.symbol,
+                                          userId: widget.userId,
+                                          portfolio: port,
+                                          documentId: port.documentId,
+                                        )),
+                              ).then((value) {
+                                updatePortfolio();
+                              });
+                            },
+                            child: Text(
+                              port.symbol,
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w700, fontSize: 18),
+                            ),
                           )),
                           DataCell(Text(
                             getPrice(port.symbol),
@@ -291,12 +339,23 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Dynamic DCF Calculator"),
+        title: Text("DCF Calculator",
+            style: TextStyle(
+                color: Colors.white) //Theme.of(context).textTheme.title,
+
+            ),
         actions: <Widget>[
-          new FlatButton(
-              child: new Text('Logout',
-                  style: new TextStyle(fontSize: 17.0, color: Colors.white)),
-              onPressed: signOut),
+          PopupMenuButton(
+            onSelected: selectedMenuItem,
+            itemBuilder: (BuildContext context) {
+              return _choices.map((String choice) {
+                return PopupMenuItem(
+                  value: choice,
+                  child: Text(choice),
+                );
+              }).toList();
+            },
+          ),
         ],
       ),
       body: SmartRefresher(
@@ -317,16 +376,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   String getPrice(String symbol) {
-    if (priceList['companiesPriceList'] == null) {
+    if (priceList == null) {
       return '0';
     }
-    if (priceList['companiesPriceList']
-            .where((s) {
-              return s['symbol'] == symbol;
-            })
-            .toList()
-            .length ==
-        0) {
+    if (priceList['companiesPriceList'] == null) {
       return '0';
     } else {
       return priceList['companiesPriceList']
@@ -335,6 +388,25 @@ class _HomePageState extends State<HomePage> {
           })
           .toList()[0]['price']
           .toString();
+    }
+  }
+
+  void selectedMenuItem(String selected) {
+    //print(selected);
+    String aboutBody =
+        "Discounted cash flow (DCF) is a valuation method used to estimate the value of an investment based on its future cash flows. DCF analysis attempts to figure out the value of an investment today, based on projections of how much money it will generate in the future.";
+    String disclaimerBody =
+        "This app is a resource for educational and general informational purposes and does not constitute actual financial advice. No one should make any investment decision without first consulting his or her own financial advisor and/or conducting his or her own research and due diligence. There is no guarantee or other promise as to any results that may be obtained from using this app. Investing of any kind involves risk and your investments may lose value.";
+    if (selected == "Logout") {
+      signOut();
+    } else if (selected == "About") {
+      _showInfo("About", aboutBody).then((nullValue) {
+        //Navigator.of(context).pop();
+      });
+    } else if (selected == "Disclaimer") {
+      _showInfo("Disclaimer", disclaimerBody).then((nullValue) {
+        //Navigator.of(context).pop();
+      });
     }
   }
 }
