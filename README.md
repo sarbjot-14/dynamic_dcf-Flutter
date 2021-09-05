@@ -1,17 +1,32 @@
-# dynamic_dcf
+# Dynamic Discounted Cashflow Model
 
-A new Flutter application.
 
-## Getting Started
 
-This project is a starting point for a Flutter application.
+Mobile app that allows you to create price targets for stocks with a discounted cashflow analysis tool. 
+* Login and Signup
+* Create watch list with any publicaly traded company
+* Do discounted cashflow analysis
+* Save price targets derived from analysis
+* Edit previous price targets
+* Delete targets or tickers from watchlists. 
 
-A few resources to get you started if this is your first Flutter project:
+## Tech Stack
+* **Flutter** 
+* **Firebase Authentication** 
+* **Firebase Database** 
+* **Google Play Store**  : deployment
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+## Reflection
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-# dynamic_dcf
+### Learning Outcomes
+1. Learned Flutter
+2. Learned how to use api to fetch data on stocks
+3. State management (passing data to new pages)
+4. UI design
+5. Use firebase for authentication and database
+
+### Unexpected Obstacles
+* Fetching data from API can lead to problems because of asynchronous nature. 
+* State management is difficult if not using a framework such as provider
+
+
