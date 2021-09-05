@@ -1,6 +1,8 @@
 # Dynamic Discounted Cashflow Model
 
-
+![alt text](https://github.com/sarbjot-14/dynamic_dcf/blob/master/Screenshot_20210825-114536.jpg?raw=true)
+![alt text](https://github.com/sarbjot-14/dynamic_dcf/blob/master/Screenshot_20210825-114312.jpg?raw=true)
+![alt text](https://github.com/sarbjot-14/dynamic_dcf/blob/master/Screenshot_20210825-114320.jpg?raw=true)
 
 Mobile app that allows you to create price targets for stocks with a discounted cashflow analysis tool. 
 * Login and Signup
